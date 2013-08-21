@@ -1,0 +1,225 @@
+<html>
+<head>
+<title>Consumo de Memória</title>
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script src="Chart.js"></script>
+<script type="text/javascript">
+
+//Loading google apis
+google.load('visualization', '1', {'packages':['corechart']});
+google.load('visualization', '1', {'packages':['geochart']});
+
+google.setOnLoadCallback('chart_line');
+
+//Creating variables privates
+var ip = "172.16.84.82"	//"localhost"//"172.16.84.80"
+var cURL = "http://"+ip+":8079";	//"?OPC=SESSION";
+var datageo; 	
+var dataline; 
+var datapie;
+var lchart;
+var gchart;
+var pchart;
+
+var iniciouBW;
+var iniciouLP;
+
+function init(){	
+	 iniciouBW = 0;
+	 iniciouLP = 0;
+	
+	//Creating object Line Chart and Geo Chart - Google
+	lchart = new google.visualization.LineChart(document.getElementById('chart_line'));		
+	pchart = new google.visualization.PieChart(document.getElementById('chart_pie')); 
+	
+	//Creating DataTable objects
+	dataline = new google.visualization.DataTable();
+	datapie = new google.visualization.DataTable();
+    
+	//Adding Column in dataline object
+	dataline.addColumn('string', 'Origem');
+	dataline.addColumn('number', 'Valor');
+	dataline.addRows([[" ",0],[" ",0],[" ",0],[" ",0],[" ",0]]);
+
+	datapie.addColumn('string', 'Origem');
+	datapie.addColumn('number', 'Valor');
+	datapie.addRows([[" ",0],[" ",0],[" ",0],[" ",0],[" ",0]]);
+	
+	getDados();				
+	
+	//setInterval("getDados()", 0)
+	//Determineted time of call function getDados
+	setTimeout('getDados(cURL)', 1000); //document.getElementById('refresh').value
+
+}
+
+function getDados()
+{					
+	//Creating object of requests data
+	var request = new XMLHttpRequest();
+	var lineJson;
+	var contador;
+
+	contador = "%S";	
+
+	request.open("GET", cURL, true);
+	request.send(null);
+    					
+	request.onreadystatechange= function()
+	{
+		if(request.readyState==4)
+		{
+			if(request.status==200 || request.location.href.indexOf("http")==-1)
+			{
+				if(request.responseText !='')
+				{																			
+					if(request.responseText == "Erro de conexao com o Broker Server.")
+					{
+						alert(request.responseText);
+						delete request;
+						return;
+					}
+					
+					if(request.responseText == "Msg nao Encontrada ...")
+					{
+						delete request;
+						return;										
+					}
+																														
+					cURL = "http://"+ip+":8078?OPC=GRAFICO" + contador;
+					
+					//Creating object JSON from read request.
+					lineJson = eval('(' + request.responseText + ')');
+					
+					lineJson = {"ROWS": [["SERVER" ," 5025.61 "], ["USED" ," 5431.48 "], ["FREE" ," 2594.13 "], ["PROTHEUS" ," 2584.75 "]]};
+					
+					if(iniciouBW != 0 && iniciouLP == 0 && (contador == "0000" || contador == "0"))
+					{
+						// Se for a primeira vez do LP e o contador eh zero atualiza somente o contador e retorna
+						contador = lineJson.Contador;
+						cURL = "http://"+ip+":8078?OPC=GRAFICO" +  contador;
+						iniciouLP = 1;
+						delete request;						
+						return;	
+					}
+					else
+					{
+						iniciouBW = 1;
+					}
+					contador = lineJson.Contador;
+
+					//Call functions to creating Chart Line and ChartGeo														
+
+					chart_line(lineJson);
+					chart_pie(lineJson);
+					chart_pie_new(lineJson);
+					delete lineJson;
+				}				
+			}
+		}						
+	}
+
+	delete request;
+}
+
+function chart_line(JSON)
+{
+	console.log(JSON);
+	var nvar0 = JSON.ROWS[0][1] * 1;
+	var ctxt0 = JSON.ROWS[0][0];
+	var nvar1 = JSON.ROWS[1][1] * 1;
+	var ctxt1 = JSON.ROWS[1][0];
+	var nvar2 = JSON.ROWS[2][1] * 1;
+	var ctxt2 = JSON.ROWS[2][0];
+	var nvar3 = JSON.ROWS[3][1] * 1;
+	var ctxt3 = JSON.ROWS[3][0];
+	
+	dataline.setCell(0, 0, ctxt0);
+	dataline.setCell(0, 1, nvar0);
+	dataline.setCell(1, 0, ctxt1);
+	dataline.setCell(1, 1, nvar1);
+	dataline.setCell(2, 0, ctxt2);
+	dataline.setCell(2, 1, nvar2);
+	dataline.setCell(3, 0, ctxt3);
+	dataline.setCell(3, 1, nvar3);
+	
+	var options = {width: 1100, height: 400, title: 'Consumo de Memoria Server', titleTextStyle: {color: 'black'}, pointSize:5,};
+	lchart.draw(dataline, options);			
+}
+
+function chart_pie_new(JSON){
+
+	var nvar0 = JSON.ROWS[0][1] * 1;
+	var ctxt0 = JSON.ROWS[0][0];
+	var nvar1 = JSON.ROWS[1][1] * 1;
+	var ctxt1 = JSON.ROWS[1][0];
+	var nvar2 = JSON.ROWS[2][1] * 1;
+	var ctxt2 = JSON.ROWS[2][0];
+	var nvar3 = JSON.ROWS[3][1] * 1;
+	var ctxt3 = JSON.ROWS[3][0];
+
+	console.log(JSON);
+	var pieData = [
+	
+		{	
+			label : "tes",
+			value: 30, 
+			color:"#3366cc"
+		},		{
+			value : nvar0,
+			color : "#3366cc"
+		},	{
+			value : nvar1,
+			color : "#dc3912"
+		},		{
+			value : nvar2,
+			color : "#ff9900"
+		},		{
+			value : nvar3,
+			color : "#109618"
+		}	];
+
+
+		var defaults = {animateRotate : false};
+
+
+	var myPie = new Chart(document.getElementById("canvas").getContext("2d")).Pie(pieData, defaults);
+
+}
+
+function chart_pie(JSON) 
+{
+	var nvar0 = JSON.ROWS[0][1] * 1;
+	var ctxt0 = JSON.ROWS[0][0];
+	var nvar1 = JSON.ROWS[1][1] * 1;
+	var ctxt1 = JSON.ROWS[1][0];
+	var nvar2 = JSON.ROWS[2][1] * 1;
+	var ctxt2 = JSON.ROWS[2][0];
+	var nvar3 = JSON.ROWS[3][1] * 1;
+	var ctxt3 = JSON.ROWS[3][0];
+	
+	datapie.setCell(0, 0, ctxt0);
+	datapie.setCell(0, 1, nvar0);	//JSON.ROWS[0][1]);	//SERVER
+	datapie.setCell(1, 0, ctxt1);
+	datapie.setCell(1, 1, nvar1);	//JSON.ROWS[0][1]);	//SERVER
+	datapie.setCell(2, 0, ctxt2);
+	datapie.setCell(2, 1, nvar2);	//JSON.ROWS[0][1]);	//SERVER
+	datapie.setCell(3, 0, ctxt3);
+	datapie.setCell(3, 1, nvar3);	//JSON.ROWS[0][1]);	//SERVER
+	var options = {width: 500, height: 500, title:'Consumo'};
+	pchart.draw(datapie, options);
+	
+}
+
+</script>
+</head>
+<meta http-equiv="Cache-Control" content="No-Cache">
+<meta http-equiv="Pragma" content="No-Cache">
+<meta http-equiv="Expires" content="0">
+<body onload="init()">
+<div id="chart_line"></div>
+<div id="mestra"></div>
+<div id="chart_pie" style="float:right"></div>
+<canvas id="canvas" height="450" width="450"></canvas>
+</body>
+</html>
