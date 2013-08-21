@@ -3,7 +3,17 @@
 <title>Consumo de Memória</title>
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script src="Chart.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+
+
+<script type="text/javascript" src="http://www.jqplot.com/src/plugins/jqplot.canvasTextRenderer.min.js"></script>
+<script type="text/javascript" src="http://www.jqplot.com/src/plugins/jqplot.canvasAxisLabelRenderer.min.js"></script>
+
 <script type="text/javascript">
+
+
+
+
 
 //Loading google apis
 google.load('visualization', '1', {'packages':['corechart']});
@@ -211,6 +221,8 @@ function chart_pie(JSON)
 	
 }
 
+
+
 </script>
 </head>
 <meta http-equiv="Cache-Control" content="No-Cache">
@@ -221,5 +233,9 @@ function chart_pie(JSON)
 <div id="mestra"></div>
 <div id="chart_pie" style="float:right"></div>
 <canvas id="canvas" height="450" width="450"></canvas>
+
+
+<div id="chart2" ></div>
+
 </body>
 </html>
