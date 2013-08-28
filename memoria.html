@@ -1,29 +1,81 @@
 <html>
 <head>
 <title>Consumo de Memória</title>
-<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script type="text/javascript" src="jquery.jqplot.min.js"></script>
+    <script type="text/javascript" src="/home/william/Desktop/dist/plugins/jqplot.canvasAxisTickRenderer.min.js"></script>
+    <script type="text/javascript" src="/home/william/Desktop/dist/plugins/jqplot.canvasTextRenderer.min.js"></script>
+    <script type="text/javascript" src="/home/william/Desktop/dist/plugins/jqplot.canvasAxisLabelRenderer.min.js"></script>
+    <script type="text/javascript" src="/home/william/Desktop/dist/plugins/jqplot.cursor.min.js"></script>
+    <script type="text/javascript" src="/home/william/Desktop/dist/plugins/jqplot.pointLabels.min.js"></script>
+    <script type="text/javascript" src="/home/william/Desktop/dist/plugins/jqplot.highlighter.min.js"></script>
+
 <script src="Chart.js"></script>
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-
-
-<script type="text/javascript" src="http://www.jqplot.com/src/plugins/jqplot.canvasTextRenderer.min.js"></script>
-<script type="text/javascript" src="http://www.jqplot.com/src/plugins/jqplot.canvasAxisLabelRenderer.min.js"></script>
 
 <script type="text/javascript">
 
+var JSON_GLOBAL;
+
+function chart(){
+
+	var charts = $('#charts');
+
+	for(var y in JSON_GLOBAL.ROWS){
+		charts.append('<b style="text-align: center;padding-left: 500px;">Server : '+JSON_GLOBAL.ROWS[y].SERVER_IP+'</b>')
+    	charts.append('<div id="div-'+y+'"">')
+    }
 
 
+    
+    for(var y in JSON_GLOBAL.ROWS){    
+
+	    var dados = [
+	        	[],[],[],[]
+	        ];
+	    
+		var plot2;
+	    var i = 2;
+
+	    interval(y);
+
+	    
+	}
+
+	function interval(y){
+		setInterval(function(){
+	    	
+
+	    	dados[0].push([i,JSON_GLOBAL.ROWS[y].SERVER-i]);
+	    	dados[1].push([i,JSON_GLOBAL.ROWS[y].USED-i]);
+	    	dados[2].push([i,JSON_GLOBAL.ROWS[y].FREE-i]);
+	    	dados[3].push([i,JSON_GLOBAL.ROWS[y].PROTHEUS-i]);
+
+	    	plot2 = $.jqplot('div-'+y, dados, {
+		        seriesDefaults: {
+		            renderer:$.jqplot.BarRenderer,	            	            
+		            shadowAngle: 135,	            
+		            rendererOptions: {
+		                barDirection: 'vertical'
+		            }
+		        },
+		        axes: {
+		            yaxis: {
+		                
+		            }
+		        }
+		    });
+
+		    if(plot2){plot2.replot();}
+	        i++;
+
+	    }, 1000);		
+	}
+};
 
 
-//Loading google apis
-google.load('visualization', '1', {'packages':['corechart']});
-google.load('visualization', '1', {'packages':['geochart']});
-
-google.setOnLoadCallback('chart_line');
-
-//Creating variables privates
 var ip = "172.16.84.82"	//"localhost"//"172.16.84.80"
-var cURL = "http://"+ip+":8079";	//"?OPC=SESSION";
+var cURL = "http://"+ip+":4000";	//"?OPC=SESSION";
 var datageo; 	
 var dataline; 
 var datapie;
@@ -35,31 +87,13 @@ var iniciouBW;
 var iniciouLP;
 
 function init(){	
-	 iniciouBW = 0;
-	 iniciouLP = 0;
-	
-	//Creating object Line Chart and Geo Chart - Google
-	lchart = new google.visualization.LineChart(document.getElementById('chart_line'));		
-	pchart = new google.visualization.PieChart(document.getElementById('chart_pie')); 
-	
-	//Creating DataTable objects
-	dataline = new google.visualization.DataTable();
-	datapie = new google.visualization.DataTable();
-    
-	//Adding Column in dataline object
-	dataline.addColumn('string', 'Origem');
-	dataline.addColumn('number', 'Valor');
-	dataline.addRows([[" ",0],[" ",0],[" ",0],[" ",0],[" ",0]]);
-
-	datapie.addColumn('string', 'Origem');
-	datapie.addColumn('number', 'Valor');
-	datapie.addRows([[" ",0],[" ",0],[" ",0],[" ",0],[" ",0]]);
+ 
 	
 	getDados();				
 	
 	//setInterval("getDados()", 0)
 	//Determineted time of call function getDados
-	setTimeout('getDados(cURL)', 1000); //document.getElementById('refresh').value
+	setInterval('getDados(cURL)', 1000); //document.getElementById('refresh').value
 
 }
 
@@ -96,18 +130,19 @@ function getDados()
 						return;										
 					}
 																														
-					cURL = "http://"+ip+":8078?OPC=GRAFICO" + contador;
+					cURL = "http://"+ip+":4000?OPC=GRAFICO" + contador;
 					
+					console.log(request.responseText);
 					//Creating object JSON from read request.
 					lineJson = eval('(' + request.responseText + ')');
 					
-					lineJson = {"ROWS": [["SERVER" ," 5025.61 "], ["USED" ," 5431.48 "], ["FREE" ," 2594.13 "], ["PROTHEUS" ," 2584.75 "]]};
+				//	lineJson = {"ROWS": [["SERVER" ," 5025.61 "], ["USED" ," 5431.48 "], ["FREE" ," 2594.13 "], ["PROTHEUS" ," 2584.75 "]]};
 					
 					if(iniciouBW != 0 && iniciouLP == 0 && (contador == "0000" || contador == "0"))
 					{
 						// Se for a primeira vez do LP e o contador eh zero atualiza somente o contador e retorna
 						contador = lineJson.Contador;
-						cURL = "http://"+ip+":8078?OPC=GRAFICO" +  contador;
+						cURL = "http://"+ip+":4000?OPC=GRAFICO" +  contador;
 						iniciouLP = 1;
 						delete request;						
 						return;	
@@ -116,13 +151,9 @@ function getDados()
 					{
 						iniciouBW = 1;
 					}
-					contador = lineJson.Contador;
+					contador = lineJson.Contador;				
 
-					//Call functions to creating Chart Line and ChartGeo														
-
-					chart_line(lineJson);
-					chart_pie(lineJson);
-					chart_pie_new(lineJson);
+					chart_line(lineJson);					
 					delete lineJson;
 				}				
 			}
@@ -132,110 +163,26 @@ function getDados()
 	delete request;
 }
 
-function chart_line(JSON)
-{
-	console.log(JSON);
-	var nvar0 = JSON.ROWS[0][1] * 1;
-	var ctxt0 = JSON.ROWS[0][0];
-	var nvar1 = JSON.ROWS[1][1] * 1;
-	var ctxt1 = JSON.ROWS[1][0];
-	var nvar2 = JSON.ROWS[2][1] * 1;
-	var ctxt2 = JSON.ROWS[2][0];
-	var nvar3 = JSON.ROWS[3][1] * 1;
-	var ctxt3 = JSON.ROWS[3][0];
-	
-	dataline.setCell(0, 0, ctxt0);
-	dataline.setCell(0, 1, nvar0);
-	dataline.setCell(1, 0, ctxt1);
-	dataline.setCell(1, 1, nvar1);
-	dataline.setCell(2, 0, ctxt2);
-	dataline.setCell(2, 1, nvar2);
-	dataline.setCell(3, 0, ctxt3);
-	dataline.setCell(3, 1, nvar3);
-	
-	var options = {width: 1100, height: 400, title: 'Consumo de Memoria Server', titleTextStyle: {color: 'black'}, pointSize:5,};
-	lchart.draw(dataline, options);			
+function chart_line(JSON){	
+	JSON_GLOBAL = JSON;
+	for(var i in JSON.ROWS){
+		console.log(JSON.ROWS[i]);
+	}
 }
 
-function chart_pie_new(JSON){
+setTimeout(function() {
 
-	var nvar0 = JSON.ROWS[0][1] * 1;
-	var ctxt0 = JSON.ROWS[0][0];
-	var nvar1 = JSON.ROWS[1][1] * 1;
-	var ctxt1 = JSON.ROWS[1][0];
-	var nvar2 = JSON.ROWS[2][1] * 1;
-	var ctxt2 = JSON.ROWS[2][0];
-	var nvar3 = JSON.ROWS[3][1] * 1;
-	var ctxt3 = JSON.ROWS[3][0];
+chart();
 
-	console.log(JSON);
-	var pieData = [
-	
-		{	
-			label : "tes",
-			value: 30, 
-			color:"#3366cc"
-		},		{
-			value : nvar0,
-			color : "#3366cc"
-		},	{
-			value : nvar1,
-			color : "#dc3912"
-		},		{
-			value : nvar2,
-			color : "#ff9900"
-		},		{
-			value : nvar3,
-			color : "#109618"
-		}	];
-
-
-		var defaults = {animateRotate : false};
-
-
-	var myPie = new Chart(document.getElementById("canvas").getContext("2d")).Pie(pieData, defaults);
-
-}
-
-function chart_pie(JSON) 
-{
-	var nvar0 = JSON.ROWS[0][1] * 1;
-	var ctxt0 = JSON.ROWS[0][0];
-	var nvar1 = JSON.ROWS[1][1] * 1;
-	var ctxt1 = JSON.ROWS[1][0];
-	var nvar2 = JSON.ROWS[2][1] * 1;
-	var ctxt2 = JSON.ROWS[2][0];
-	var nvar3 = JSON.ROWS[3][1] * 1;
-	var ctxt3 = JSON.ROWS[3][0];
-	
-	datapie.setCell(0, 0, ctxt0);
-	datapie.setCell(0, 1, nvar0);	//JSON.ROWS[0][1]);	//SERVER
-	datapie.setCell(1, 0, ctxt1);
-	datapie.setCell(1, 1, nvar1);	//JSON.ROWS[0][1]);	//SERVER
-	datapie.setCell(2, 0, ctxt2);
-	datapie.setCell(2, 1, nvar2);	//JSON.ROWS[0][1]);	//SERVER
-	datapie.setCell(3, 0, ctxt3);
-	datapie.setCell(3, 1, nvar3);	//JSON.ROWS[0][1]);	//SERVER
-	var options = {width: 500, height: 500, title:'Consumo'};
-	pchart.draw(datapie, options);
-	
-}
-
-
-
+}, 2000);
 </script>
 </head>
 <meta http-equiv="Cache-Control" content="No-Cache">
 <meta http-equiv="Pragma" content="No-Cache">
 <meta http-equiv="Expires" content="0">
 <body onload="init()">
-<div id="chart_line"></div>
-<div id="mestra"></div>
-<div id="chart_pie" style="float:right"></div>
-<canvas id="canvas" height="450" width="450"></canvas>
 
-
-<div id="chart2" ></div>
+<div id="charts" ></div>
 
 </body>
 </html>
